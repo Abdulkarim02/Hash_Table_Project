@@ -3,8 +3,12 @@
 #include <string.h>
 #include <math.h>
 #include "hash_table.h"
+#include "prime.c"
 
 static int ht_get_hash(const char *s, int mod , int attempt);
+static void ht_resize_up(ht_hash_table* ht);
+static void ht_resize_down(ht_hash_table* ht);
+
 static ht_item HT_DELETED_ITEM = {NULL,NULL};
 
 static ht_item* ht_item_(char *k, char *v){
@@ -56,9 +60,9 @@ char* ht_search(ht_hash_table *a, char *k){
 }
 
 void ht_insert(ht_hash_table *a, char *k, char *v){
-    if(a->count==a->size){
-        printf("the hash table is full can not insert");
-        return;
+    const int load = a->count * 100 / a->size;
+    if (load > 70) {
+        ht_resize_up(a);
     }
     ht_item *item= ht_item_(k,v);
 
@@ -96,6 +100,11 @@ void ht_insert(ht_hash_table *a, char *k, char *v){
 
 
 void ht_delete(ht_hash_table *a, char *k){
+    const int load = a->count * 100 / a->size;
+    if (load < 10) {
+        ht_resize_down(a);
+    }
+
     int key= ht_get_hash(k,a->size,0),i;
 
     ht_item *item = a->items[key];
@@ -131,6 +140,63 @@ static int ht_get_hash(const char *s, int mod , int attempt){
     hash_b= ht_hash(s,HT_PRIME2,mod);
     return (hash_a + (attempt * (hash_b+1))) % mod;
 }
+
+
+static ht_hash_table* ht_new_sized(const int base_size) {
+    ht_hash_table* ht = (ht_hash_table*) malloc(sizeof(ht_hash_table));
+    ht->base_size = base_size;
+
+    ht->size = next_prime(ht->base_size);
+
+    ht->count = 0;
+    ht->items = (ht_item**) calloc((size_t)ht->size, sizeof(ht_item*));
+    return ht;
+}
+
+ht_hash_table* ht_new() {
+    return ht_new_sized(HT_INITIAL_BASE_SIZE);
+}
+
+static void ht_resize(ht_hash_table* ht, const int base_size) {
+    if (base_size < HT_INITIAL_BASE_SIZE) {
+        return;
+    }
+    ht_hash_table* new_ht = ht_new_sized(base_size);
+    for (int i = 0; i < ht->size; i++) {
+        ht_item* item = ht->items[i];
+        if (item != NULL && item != &HT_DELETED_ITEM) {
+            ht_insert(new_ht, item->k, item->v);
+        }
+    }
+
+    ht->base_size = new_ht->base_size;
+    ht->count = new_ht->count;
+
+    // To delete new_ht, we give it ht's size and items 
+    const int tmp_size = ht->size;
+    ht->size = new_ht->size;
+    new_ht->size = tmp_size;
+
+    ht_item** tmp_items = ht->items;
+    ht->items = new_ht->items;
+    new_ht->items = tmp_items;
+
+    ht_del_hash_table(new_ht);
+}
+
+static void ht_resize_up(ht_hash_table* ht) {
+    const int new_size = ht->base_size * 2;
+    ht_resize(ht, new_size);
+}
+
+
+static void ht_resize_down(ht_hash_table* ht) {
+    const int new_size = ht->base_size / 2;
+    ht_resize(ht, new_size);
+}
+
+
+
 static void print_ht(ht_hash_table *a){
     for(int i=0;i<a->size;i++){
         if(a->items[i]!= NULL && a->items[i] != &HT_DELETED_ITEM)
@@ -138,11 +204,16 @@ static void print_ht(ht_hash_table *a){
     }
 }
 int main(){
-    ht_hash_table *ht = ht_hash_table_(53);
-    char *a="gg",*b="qwerasd",*c="fredcm";
+    ht_hash_table *ht = ht_new();
+    char *a,*b,*c;
+    a= (char *) malloc(2);
+    b= (char *) malloc(7);
+    c= (char *) malloc(6);
+
+    a="gg"; b="qwerasd"; c="fredcm";
     ht_insert(ht,a,b);
-    ht_insert(ht,b,"!gg");
-    ht_delete(ht,b);
+    // ht_insert(ht,b,"!gg");
+    // ht_delete(ht,b);
     
     printf("%s\n",ht_search(ht,a));
     printf("%s\n",ht_search(ht,b));

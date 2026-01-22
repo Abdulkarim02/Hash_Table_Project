@@ -28,9 +28,3 @@ int next_prime(int x){
 
     return x;
 }
-
-int main(){
-    for(int i=-10;i<12;i++){
-        printf("%d next prime is %d\n",i,next_prime(i));
-    }
-}
