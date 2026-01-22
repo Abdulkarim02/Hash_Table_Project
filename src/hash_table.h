@@ -3,6 +3,11 @@
 
 #include<stdio.h>
 
+const int HT_PRIME1 = 151;
+const int HT_PRIME2 = 163;
+
+
+
 typedef struct
 {
     char *k;
@@ -17,19 +22,15 @@ typedef struct
 
 } ht_hash_table;
 
-ht_item* ht_item_(char *k, char *v);
-void ht_del_item(ht_item* item);
 
 ht_hash_table* ht_hash_table_(int size);
 void ht_del_hash_table(ht_hash_table* ht);
 
-char* search(ht_hash_table *a, char *k);
+char* ht_search(ht_hash_table *a, char *k);
 
-void insert(ht_hash_table *a, char *k, char *v);
+void ht_insert(ht_hash_table *a, char *k, char *v);
 
-void deletes(ht_hash_table *a, char *k);
-
-int hash(ht_hash_table *a,char *k);
+void ht_delete(ht_hash_table *a, char *k);
 
 
 
