@@ -105,13 +105,14 @@ void ht_delete(ht_hash_table *a, char *k){
             if(strcmp(item->k,k) == 0){
                 ht_del_item(item);
                 a->items[key]= &HT_DELETED_ITEM;
+                a->count--;
             }
         }
         key= ht_get_hash(k,a->size,i);
         item = a->items[key];
         i++;
     }
-    a->count--;
+    
 }
 
 
