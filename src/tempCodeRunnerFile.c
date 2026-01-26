@@ -1,0 +1,1 @@
+ht_delete(ht,b);
